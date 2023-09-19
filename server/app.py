@@ -29,9 +29,9 @@ def check_if_logged_in():
         'check_session'
     ]
 
-    if (request.endpoint) not in open_access_list and (not session.get('user_list')):
+    if (request.endpoint) not in open_access_list and (not session.get('user_id')):
         return {'error': '401 Unauthorized'}, 401
-    
+
 class ClearSession(Resource):
 
     def delete(self):
@@ -61,7 +61,12 @@ class ShowArticle(Resource):
             if session['page_views'] <= 3:
                 return article_json, 200
 
-            return {'message': 'Maximum pageview limit reached'}, 401
+            return make_response(
+                jsonify({
+                    'message': 'Maximum pageview limit reached'
+                }),
+                401
+            )
 
         return article_json, 200
 
@@ -101,18 +106,16 @@ class CheckSession(Resource):
 class MemberOnlyIndex(Resource):
     
     def get(self):
-
-            articles = Article.query.filter(Article.is_member_only == True).all()
-            return [article.to_dict() for article in articles], 200
-        
+    
+        articles = Article.query.filter(Article.is_member_only == True).all()
+        return [article.to_dict() for article in articles], 200
 
 class MemberOnlyArticle(Resource):
     
     def get(self, id):
-        
-        article =Article.query.filter(Article.id).first()
+
+        article = Article.query.filter(Article.id == id).first()
         return article.to_dict(), 200
-    
 
 api.add_resource(ClearSession, '/clear', endpoint='clear')
 api.add_resource(IndexArticle, '/articles', endpoint='article_list')
